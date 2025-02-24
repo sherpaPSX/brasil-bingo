@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { SocketContext } from "./socketContext";
+import { Player } from "@shared/types/game";
 
 const SOCKET_SERVER_URL = "http://localhost:3001"; // Replace with your server URL
 
@@ -9,6 +10,11 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
+  const [words, setWords] = useState<Player["words"]>([]);
+  const [selectedWords, setSelectedWords] = useState<Player["selectedWords"]>(
+    []
+  );
+  const [bingo, setBingo] = useState<Player["bingo"]>(undefined);
 
   useEffect(() => {
     let storedSocketId = localStorage.getItem("socketId");
@@ -19,24 +25,28 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     setSocket(newSocket);
 
     newSocket.on("connect", () => {
-      console.log("Connected with socket ID:", newSocket.id);
-
       if (!storedSocketId && newSocket.id) {
         storedSocketId = newSocket.id;
         localStorage.setItem("socketId", storedSocketId);
       }
 
       if (username) {
-        newSocket.emit("addUser", {
+        newSocket.emit("user:add", {
           username,
-          socketId: storedSocketId,
+          id: storedSocketId,
         });
       }
     });
 
-    newSocket.emit("gameStatus");
+    newSocket.on("player:init", (player: Player) => {
+      setWords(player.words);
+      setSelectedWords(player.selectedWords);
+      setBingo(player.bingo);
+    });
 
-    newSocket.on("gameStatus", ({ started }: { started: boolean }) => {
+    newSocket.emit("game:status");
+
+    newSocket.on("game:status", ({ started }: { started: boolean }) => {
       setGameStarted(started);
     });
 
@@ -50,7 +60,18 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   return (
-    <SocketContext.Provider value={{ socket, gameStarted }}>
+    <SocketContext.Provider
+      value={{
+        socket,
+        gameStarted,
+        words,
+        setWords,
+        selectedWords,
+        setSelectedWords,
+        bingo,
+        setBingo,
+      }}
+    >
       {children}
     </SocketContext.Provider>
   );

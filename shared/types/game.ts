@@ -2,7 +2,7 @@ export interface Message {
   username: string;
   words: string[];
   message: string;
-  type: string;
+  type: "mark" | "bingo";
   currentTime: string;
 }
 
@@ -18,13 +18,19 @@ export interface Word {
 export interface Player {
   id: string;
   username: string;
-  words?: Word[];
-  selectedWords?: Word[];
+  words: Word[];
+  selectedWords: Word[];
   bingo?: {
     time: number;
-    bingoWords: Word["title"][];
   };
 }
 
 export type PlayerResponse = Player;
 export type PlayerRequest = Player;
+
+export type PlayersList = Pick<Player, "bingo" | "username" | "id">[];
+
+export interface UserRequest {
+  id: Player["id"];
+  username: Player["username"];
+}

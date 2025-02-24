@@ -23,20 +23,18 @@ export default function Messages() {
   useEffect(() => {
     if (!socket) return;
 
-    socket.emit("getMessages");
+    socket.emit("messages:get");
 
-    socket.on("messages", (messages: MessageResponse[]) => {
+    socket.on("messages:post", (messages: MessageResponse[]) => {
       setMessages(messages);
     });
 
-    socket.on("update", (message: MessageRequest) => {
-      console.log("message: ", message);
-
+    socket.on("message:new", (message: MessageRequest) => {
       setMessages((prevMessages) => [...prevMessages, message]);
     });
 
     return () => {
-      socket.off("update");
+      socket.off("message:new");
     };
   }, [socket]);
 

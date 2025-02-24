@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSocket } from "../../socket/socketContext";
 import { Player } from "../../types/Player";
+import { cn } from "@/lib/utils";
 
 export default function UsersList() {
   const { socket } = useSocket();
@@ -9,10 +10,9 @@ export default function UsersList() {
   useEffect(() => {
     if (!socket) return;
 
-    socket.emit("getUsers");
+    socket.emit("users:get");
 
-    socket.on("users", (userList: Player[]) => {
-      console.log("users: ", userList);
+    socket.on("users:post", (userList: Player[]) => {
       setUsers(userList);
     });
 
@@ -23,10 +23,17 @@ export default function UsersList() {
 
   return (
     <div className="h-full">
-      <h2 className="text-xl font-bold">Connected Users</h2>
+      <h2 className="text-xl font-bold">Seznam hráčů</h2>
       <ul className="list-disc pl-5">
         {users.map((user) => (
-          <li key={user.id}>{user.username}</li>
+          <li
+            key={user.id}
+            className={cn({
+              "text-green-500": user.bingo,
+            })}
+          >
+            {user.username}
+          </li>
         ))}
       </ul>
     </div>
