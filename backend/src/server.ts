@@ -35,7 +35,6 @@ const BUZZWORDS = [
   "frontend",
   "synchro",
   "brasil browser",
-  "refactoring",
   "CMR",
   "Smart",
   "kapacita",
