@@ -1,21 +1,23 @@
-import { log } from "console";
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import cron from "node-cron";
-import { Message, MessageRequest } from "@shared/types/game";
+import {
+  Message,
+  MessageRequest,
+  Player,
+  PlayersList,
+  UserRequest,
+  Word,
+} from "@shared/types/game";
 
 const app = express();
 const PORT = 3001;
-
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  cors: {
-    origin: "http://localhost:5173",
-  },
+  cors: { origin: "http://localhost:5173" },
 });
 
-const brasilBuzzwords = [
+const BUZZWORDS = [
   "hotfix",
   "release",
   "regresní testy",
@@ -47,136 +49,121 @@ const brasilBuzzwords = [
   "hyporisk",
 ];
 
-interface Word {
-  index: number;
-  title: string;
-}
-
-interface Player {
-  id: string;
-  username: string;
-  words?: Word[];
-  selectedWords?: Word[];
-  bingo?: {
-    time: number;
-    bingoWords: Word["title"][];
-  };
-}
-
 const connectedUsers = new Map<string, Player>();
-const messages: Message[] = [];
+let messages: Message[] = [];
 let gameStarted = false;
 
-// This function pick 25 random words from the brasilBuzzwords array
-const setWordsToUser = (): Word[] => {
-  const words = brasilBuzzwords.sort(() => Math.random() - 0.5).slice(0, 25);
-  return words.map((word, i) => ({
-    index: i,
-    title: word,
-  }));
+const getRandomWords = (): Word[] =>
+  BUZZWORDS.sort(() => Math.random() - 0.5)
+    .slice(0, 25)
+    .map((word, index) => ({ index, title: word }));
+
+const getCurrentTime = () =>
+  new Date().toLocaleTimeString("cs-CZ", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+
+const startGame = () => {
+  connectedUsers.forEach((player) =>
+    io.to(player.id).emit("player:init", player)
+  );
+  gameStarted = true;
+  io.emit("game:status", { started: gameStarted });
 };
 
-function startGame() {
-  // Emit only words which are set to the user socket id
-  connectedUsers.forEach((player) => {
-    io.to(player.id).emit("setWords", player.words);
-  });
-  gameStarted = true;
-  io.emit("gameStatus", { started: gameStarted });
-}
-
 io.on("connection", (socket) => {
-  socket.on("addUser", async ({ username, socketId }) => {
-    console.log("addUser", username, socket.id);
-    // Pokud už existuje hráč s tímto socketId, aktualizujeme jeho socket.id
-    if (socketId && connectedUsers.has(socketId)) {
-      const player = connectedUsers.get(socketId);
-      if (player) {
-        console.log(`User reconnected: ${username}`);
-
-        player.id = socket.id; // Aktualizujeme ID
-        connectedUsers.set(socketId, player); // Uložíme pod původním socketId
-        if (gameStarted) {
-          io.to(socket.id).emit("setWords", player.words); // Pošleme mu jeho slova
-        }
-      }
-    } else {
-      console.log(`New user connected: ${username}`);
-      // Nový uživatel - ale ukládáme ho pod socketId z localStorage!
-      connectedUsers.set(socketId, {
-        id: socket.id,
-        username,
-        words: setWordsToUser(),
-      });
-      if (gameStarted) {
-        io.to(socket.id).emit("setWords", connectedUsers.get(socketId)?.words);
-      }
-    }
-
-    io.emit(
-      "users",
-      Array.from(connectedUsers.values()).map((user) => ({
-        username: user.username,
-        id: user.id,
-        bingo: user.bingo,
-      }))
-    ); // Aktualizujeme seznam uživatelů
+  socket.on("user:add", ({ username, id }: UserRequest) => {
+    const player = connectedUsers.get(id || socket.id) || {
+      id: socket.id,
+      username,
+      words: getRandomWords(),
+      selectedWords: [],
+    };
+    player.id = socket.id;
+    connectedUsers.set(id || socket.id, player);
+    socket.emit("player:init", player);
+    io.emit("users:post", Array.from(connectedUsers.values()));
   });
 
-  // I need set all users as game stats to the all connected users
-  socket.on("getUsers", () => {
-    io.emit("users", Array.from(connectedUsers.values()));
+  socket.on("player:selectWord", (word: Word) => {
+    const player = Array.from(connectedUsers.values()).find(
+      (p) => p.id === socket.id
+    );
+    if (!player) return;
+
+    const index = player.selectedWords.findIndex((w) => w.index === word.index);
+    index === -1
+      ? player.selectedWords.push(word)
+      : player.selectedWords.splice(index, 1);
+    connectedUsers.set(player.id, player);
+    io.to(socket.id).emit("player:init", player);
+
+    messages.push({
+      username: player.username,
+      words: [word.title],
+      message: "označil slovo",
+      type: "mark",
+      currentTime: getCurrentTime(),
+    } satisfies Message);
+    io.emit("message:new", messages[messages.length - 1]);
   });
 
-  cron.schedule("30 10 * * 1-5", () => {
-    startGame();
+  socket.on("game:start", startGame);
+  socket.on("game:reset", () => {
+    gameStarted = false;
+    connectedUsers.forEach((player) => {
+      player.selectedWords = [];
+      player.bingo = undefined;
+      player.words = getRandomWords();
+      io.to(player.id).emit("player:init", player);
+    });
+
+    io.emit("game:status", { started: gameStarted });
+    messages = [];
+    io.emit("messages:post", messages);
+
+    // clear all unconnected users
+    connectedUsers.forEach((player, id) => {
+      if (!io.sockets.sockets.has(id)) connectedUsers.delete(id);
+    });
   });
 
-  socket.on("startGame", () => {
-    startGame();
+  socket.on("users:get", () =>
+    io.emit("users:post", Array.from(connectedUsers.values()))
+  );
+
+  socket.on("game:status", () =>
+    io.emit("game:status", { started: gameStarted })
+  );
+
+  socket.on("bingo", (bingoWords: string[]) => {
+    const player = connectedUsers.get(socket.id);
+    if (!player) return;
+    player.bingo = { time: Date.now() };
+    messages.push({
+      username: player.username,
+      words: bingoWords,
+      message: "má Bingo se slovy",
+      type: "bingo",
+      currentTime: getCurrentTime(),
+    } satisfies Message);
+    io.to(socket.id).emit("player:init", player);
+    io.emit("message:new", messages[messages.length - 1]);
   });
 
-  socket.on("resetGame", () => {
-    io.emit("gameReset");
+  socket.on("messages:get", () => io.emit("messages:post", messages));
+  socket.on("message:new", (message: MessageRequest) => {
+    messages.push(message);
+    io.emit("message:new", message);
   });
 
   socket.on("disconnect", () => {
-    const user = connectedUsers.get(socket.id);
-    if (user) {
-      console.log(`User disconnected: ${user.username}`);
-      connectedUsers.delete(socket.id);
-      io.emit("users", Array.from(connectedUsers.values()));
-    }
-  });
-
-  socket.on("update", (message: MessageRequest) => {
-    console.log(`New message`);
-    io.emit("update", message);
-    messages.push(message);
-  });
-
-  socket.on("getMessages", () => {
-    io.emit("messages", messages);
-  });
-
-  socket.on("gameStatus", () => {
-    io.emit("gameStatus", { started: gameStarted });
-  });
-
-  socket.on("bingo", (bingoWords: string[]) => {
-    console.log("Bingo words: ", bingoWords);
-    const user = connectedUsers.get(socket.id);
-    if (user) {
-      user.bingo = {
-        time: Date.now(),
-        bingoWords: bingoWords,
-      };
-      connectedUsers.set(socket.id, user);
-      io.emit("users", Array.from(connectedUsers.values()));
-    }
+    connectedUsers.delete(socket.id);
   });
 });
 
-httpServer.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+httpServer.listen(PORT, () =>
+  console.log(`Server running on http://localhost:${PORT}`)
+);
