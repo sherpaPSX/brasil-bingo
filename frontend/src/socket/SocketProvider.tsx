@@ -3,7 +3,7 @@ import { io, Socket } from "socket.io-client";
 import { SocketContext } from "./socketContext";
 import { Player } from "@shared/types/game";
 
-const SOCKET_SERVER_URL = "http://localhost:3001"; // Replace with your server URL
+const SOCKET_SERVER_URL = process.env.SOCKET_SERVER_URL;
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   children,

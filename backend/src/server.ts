@@ -10,10 +10,10 @@ import {
 } from "@shared/types/game";
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  cors: { origin: "http://localhost:5173" },
+  cors: { origin: process.env.FRONTEND_ORIGIN },
 });
 
 const BUZZWORDS = [
