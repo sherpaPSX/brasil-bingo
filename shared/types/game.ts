@@ -28,17 +28,7 @@ export interface Player {
 export type PlayerResponse = Player;
 export type PlayerRequest = Player;
 
-export type PlayersList = Pick<Player, "bingo" | "username" | "id">[];
-
 export interface UserRequest {
   id: Player["id"];
   username: Player["username"];
-}
-
-export interface PlayersList {
-  // Define the structure of PlayersList
-}
-
-export interface UserRequest {
-  // Define the structure of UserRequest
 }
