@@ -1,18 +1,12 @@
 import BingoGrid from "./BingoGrid";
 import { useSocket } from "../../socket/socketContext";
-import { Button } from "../ui/button";
 import Stats from "../stats/Stats";
-import { ResetGameButton } from "./ResetGameButton";
+
 import SubmitBingoButton from "./SubmitBingoButton";
+import Countdown from "../countdown/Countdown";
 
 export default function Game() {
-  const { socket, gameStarted, bingo } = useSocket();
-
-  const startGame = () => {
-    if (socket) {
-      socket.emit("game:start");
-    }
-  };
+  const { gameStarted } = useSocket();
 
   return (
     <>
@@ -25,12 +19,7 @@ export default function Game() {
                 <span className="text-yellow-300">B</span>uzzword{" "}
                 <span className="text-yellow-300">B</span>ingo
               </h1>
-              {!gameStarted && (
-                <Button onClick={startGame} className="min-w-[120px]">
-                  New Game
-                </Button>
-              )}
-              {bingo !== undefined && <ResetGameButton />}
+              {!gameStarted && <Countdown />}
             </div>
           </div>
           {gameStarted && <BingoGrid />}

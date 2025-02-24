@@ -64,6 +64,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         socket,
         gameStarted,
+        setGameStarted,
         words,
         setWords,
         selectedWords,

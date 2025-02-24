@@ -1,6 +1,7 @@
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import cron from "node-cron";
 import {
   Message,
   MessageRequest,
@@ -64,6 +65,7 @@ const getCurrentTime = () =>
   });
 
 const startGame = () => {
+  console.log("Starting game");
   connectedUsers.forEach((player) =>
     io.to(player.id).emit("player:init", player)
   );
@@ -112,23 +114,26 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("game:start", startGame);
-  socket.on("game:reset", () => {
-    gameStarted = false;
-    connectedUsers.forEach((player) => {
-      player.selectedWords = [];
-      player.bingo = undefined;
-      player.words = getRandomWords();
-      io.to(player.id).emit("player:init", player);
-    });
+  cron.schedule("30 10 * * 1-5", startGame);
 
-    io.emit("game:status", { started: gameStarted });
-    messages = [];
-    io.emit("messages:post", messages);
+  cron.schedule("15 11 * * 1-5", () => {
+    socket.on("game:reset", () => {
+      gameStarted = false;
+      connectedUsers.forEach((player) => {
+        player.selectedWords = [];
+        player.bingo = undefined;
+        player.words = getRandomWords();
+        io.to(player.id).emit("player:init", player);
+      });
 
-    // clear all unconnected users
-    connectedUsers.forEach((player, id) => {
-      if (!io.sockets.sockets.has(id)) connectedUsers.delete(id);
+      io.emit("game:status", { started: gameStarted });
+      messages = [];
+      io.emit("messages:post", messages);
+
+      // clear all unconnected users
+      connectedUsers.forEach((player, id) => {
+        if (!io.sockets.sockets.has(id)) connectedUsers.delete(id);
+      });
     });
   });
 
