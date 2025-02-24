@@ -168,6 +168,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     connectedUsers.delete(socket.id);
+    io.emit("users:post", Array.from(connectedUsers.values()));
   });
 });
 
