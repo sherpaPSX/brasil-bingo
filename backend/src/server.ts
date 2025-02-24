@@ -5,7 +5,6 @@ import {
   Message,
   MessageRequest,
   Player,
-  PlayersList,
   UserRequest,
   Word,
 } from "@shared/types/game";
