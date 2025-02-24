@@ -26,10 +26,8 @@
 
     /* Modules */
     "module": "commonjs" /* Specify what module code is generated. */,
-    "rootDirs": [
-      "../shared",
-      "./src"
-    ] /* Specify the root folder within your source files. */,
+    "rootDir": "../",
+    /* Specify the root folder within your source files. */
     // "moduleResolution": "node10",                     /* Specify how TypeScript looks up a file from a given module specifier. */
     // "baseUrl": "./",                                  /* Specify the base directory to resolve non-relative module names. */
     "paths": {
@@ -113,5 +111,6 @@
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
   },
-  "include": ["../shared/**/*.ts", "./src/**/*.ts"]
+  "include": ["../shared/**/*.ts", "./src/**/*.ts"],
+  "exclude": ["dist"]
 }
