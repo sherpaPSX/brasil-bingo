@@ -34,3 +34,11 @@ export interface UserRequest {
   id: Player["id"];
   username: Player["username"];
 }
+
+export interface PlayersList {
+  // Define the structure of PlayersList
+}
+
+export interface UserRequest {
+  // Define the structure of UserRequest
+}

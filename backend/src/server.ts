@@ -93,21 +93,25 @@ io.on("connection", (socket) => {
     );
     if (!player) return;
 
-    const index = player.selectedWords.findIndex((w) => w.index === word.index);
-    index === -1
-      ? player.selectedWords.push(word)
-      : player.selectedWords.splice(index, 1);
-    connectedUsers.set(player.id, player);
-    io.to(socket.id).emit("player:init", player);
+    if (player.selectedWords) {
+      const index = player.selectedWords.findIndex(
+        (w) => w.index === word.index
+      );
+      index === -1
+        ? player.selectedWords.push(word)
+        : player.selectedWords.splice(index, 1);
+      connectedUsers.set(player.id, player);
+      io.to(socket.id).emit("player:init", player);
 
-    messages.push({
-      username: player.username,
-      words: [word.title],
-      message: "označil slovo",
-      type: "mark",
-      currentTime: getCurrentTime(),
-    } satisfies Message);
-    io.emit("message:new", messages[messages.length - 1]);
+      messages.push({
+        username: player.username,
+        words: [word.title],
+        message: "označil slovo",
+        type: "mark",
+        currentTime: getCurrentTime(),
+      } satisfies Message);
+      io.emit("message:new", messages[messages.length - 1]);
+    }
   });
 
   socket.on("game:start", startGame);
