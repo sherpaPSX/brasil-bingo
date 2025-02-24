@@ -13,7 +13,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  cors: { origin: process.env.FRONTEND_ORIGIN },
+  cors: { origin: process.env.FRONTEND_ORIGIN || "http://localhost:3000" },
 });
 
 const BUZZWORDS = [

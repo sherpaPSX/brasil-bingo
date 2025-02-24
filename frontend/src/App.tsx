@@ -7,7 +7,7 @@ function App() {
   const username = useLocalStorage("username");
 
   return (
-    <div style={{ height: "100dvh" }}>
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
       {username ? (
         <SocketProvider>
           <Game />

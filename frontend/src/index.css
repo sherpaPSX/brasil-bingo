@@ -170,3 +170,7 @@
 .word-card.selected::after {
   background: linear-gradient(347deg, #ffffff6b 0%, #fedd00 70%);
 }
+
+.body {
+  background-image: url("./images/bg.jpg");
+}

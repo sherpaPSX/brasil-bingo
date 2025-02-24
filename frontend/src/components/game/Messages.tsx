@@ -39,9 +39,8 @@ export default function Messages() {
   }, [socket]);
 
   return (
-    <div className="h-full">
-      <h3>Game stats</h3>
-      <ScrollArea className="h-80 bg-gray-700 w-full  border mt-3 text-xs p-3 flex-1">
+    <div className="flex-1">
+      <ScrollArea className="h-full bg-gray-700/80 w-full  border mt-3 text-xs p-3 flex-1 border-white/30">
         {messages.map((message, index) => (
           <div
             key={index}

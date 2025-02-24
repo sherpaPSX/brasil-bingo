@@ -1,62 +1,22 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Word } from "../../types/Word";
 import { useSocket } from "../../socket/socketContext";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "../ui/button";
-
-const winPatterns = [
-  // Rows
-  [0, 1, 2, 3, 4],
-  [5, 6, 7, 8, 9],
-  [10, 11, 12, 13, 14],
-  [15, 16, 17, 18, 19],
-  [20, 21, 22, 23, 24],
-  // Columns
-  [0, 5, 10, 15, 20],
-  [1, 6, 11, 16, 21],
-  [2, 7, 12, 17, 22],
-  [3, 8, 13, 18, 23],
-  [4, 9, 14, 19, 24],
-  // Diagonals
-  [0, 6, 12, 18, 24],
-  [4, 8, 12, 16, 20],
-];
 
 const BingoGrid: React.FC = () => {
   const { socket, words, selectedWords, bingo } = useSocket();
-
-  const [showSubmitButton, setShowSubmitButton] = useState(false);
-
-  const checkBingo = (selected: Word[]): [boolean] => {
-    const winningPattern = winPatterns.find((pattern) =>
-      pattern.every((index) => selected.some((word) => word.index === index))
-    );
-    return [!!winningPattern];
-  };
 
   const handleCellClick = (word: Word) => {
     socket?.emit("player:selectWord", word);
   };
 
-  useEffect(() => {
-    const [won] = checkBingo(selectedWords);
-    setShowSubmitButton(won);
-  }, [selectedWords]);
-
   const isWordSelected = (index: number) => {
     return selectedWords.some((word) => word.index === index);
   };
 
-  const submitBingo = () => {
-    socket?.emit(
-      "bingo",
-      selectedWords.map((word) => word.title)
-    );
-  };
-
   return (
-    <div>
+    <div className="bg-black/30 p-4 rounded-lg">
       <div className={cn("grid grid-cols-5 gap-2")}>
         {words &&
           words.length > 0 &&
@@ -93,13 +53,6 @@ const BingoGrid: React.FC = () => {
               </button>
             );
           })}
-      </div>
-      <div>
-        {showSubmitButton && !bingo && (
-          <Button size="lg" variant="destructive" onClick={submitBingo}>
-            Potvrdit Bingo
-          </Button>
-        )}
       </div>
     </div>
   );
