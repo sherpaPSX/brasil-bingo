@@ -1,13 +1,9 @@
 import BingoGrid from "./BingoGrid";
-import { useSocket } from "../../socket/socketContext";
 import Stats from "../stats/Stats";
 
 import SubmitBingoButton from "./SubmitBingoButton";
-import Countdown from "../countdown/Countdown";
 
 export default function Game() {
-  const { gameStarted } = useSocket();
-
   return (
     <>
       <div className="grid grid-cols-3 flex-1">
@@ -19,10 +15,9 @@ export default function Game() {
                 <span className="text-yellow-300">B</span>uzzword{" "}
                 <span className="text-yellow-300">B</span>ingo
               </h1>
-              {!gameStarted && <Countdown />}
             </div>
           </div>
-          {gameStarted && <BingoGrid />}
+          <BingoGrid />
           <SubmitBingoButton />
         </div>
 

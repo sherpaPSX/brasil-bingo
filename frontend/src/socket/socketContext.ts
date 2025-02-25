@@ -7,9 +7,6 @@ interface SocketContextType {
   words: Player["words"];
   setWords: (words: Player["words"]) => void;
   selectedWords: Player["selectedWords"];
-  setSelectedWords: (selectedWords: Player["selectedWords"]) => void;
-  gameStarted: boolean;
-  setGameStarted: (gameStarted: boolean) => void;
   bingo: Player["bingo"];
   setBingo: (bingo: Player["bingo"]) => void;
 }

@@ -9,7 +9,6 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [gameStarted, setGameStarted] = useState(false);
   const [words, setWords] = useState<Player["words"]>([]);
   const [selectedWords, setSelectedWords] = useState<Player["selectedWords"]>(
     []
@@ -17,23 +16,22 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   const [bingo, setBingo] = useState<Player["bingo"]>(undefined);
 
   useEffect(() => {
-    let storedSocketId = localStorage.getItem("socketId");
-    const username = localStorage.getItem("username");
+    let userId = localStorage.getItem("userId");
+    if (!userId) {
+      userId = crypto.randomUUID(); // Vytvoří unikátní ID (můžeš použít i jiný způsob)
+      localStorage.setItem("userId", userId);
+    }
 
+    const username = localStorage.getItem("username");
     const newSocket = io(SOCKET_SERVER_URL);
 
     setSocket(newSocket);
 
     newSocket.on("connect", () => {
-      if (!storedSocketId && newSocket.id) {
-        storedSocketId = newSocket.id;
-        localStorage.setItem("socketId", storedSocketId);
-      }
-
       if (username) {
         newSocket.emit("user:add", {
           username,
-          id: storedSocketId,
+          id: userId, // Použijeme stále stejné ID
         });
       }
     });
@@ -46,14 +44,6 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 
     newSocket.emit("game:status");
 
-    newSocket.on("game:status", ({ started }: { started: boolean }) => {
-      setGameStarted(started);
-    });
-
-    newSocket.on("disconnect", () => {
-      console.log("Disconnected");
-    });
-
     return () => {
       newSocket.disconnect();
     };
@@ -63,12 +53,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     <SocketContext.Provider
       value={{
         socket,
-        gameStarted,
-        setGameStarted,
         words,
         setWords,
         selectedWords,
-        setSelectedWords,
         bingo,
         setBingo,
       }}
