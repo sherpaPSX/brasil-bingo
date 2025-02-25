@@ -1,4 +1,4 @@
-import { Word } from "@/types/Word";
+import { Word } from "@shared/types/game";
 
 const winPatterns = [
   // Rows

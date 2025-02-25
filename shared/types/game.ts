@@ -2,7 +2,7 @@ export interface Message {
   username: string;
   words: string[];
   message: string;
-  type: "userMessage" | "bingo";
+  type: "userMessage" | "bingo" | "userConnected" | "userDisconnected";
   currentTime: string;
 }
 
@@ -30,3 +30,9 @@ export interface UserRequest {
   id: Player["id"];
   username: Player["username"];
 }
+
+export type UsersList = Array<{
+  id: Player["id"];
+  username: Player["username"];
+  bingo: Player["bingo"];
+}>;

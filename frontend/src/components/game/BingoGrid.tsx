@@ -1,7 +1,7 @@
-import { Word } from "../../types/Word";
 import { useSocket } from "../../socket/socketContext";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Word } from "@shared/types/game";
 
 const BingoGrid: React.FC = () => {
   const { socket, words, selectedWords, setSelectedWords, bingo } = useSocket();

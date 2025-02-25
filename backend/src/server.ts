@@ -2,7 +2,13 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cron from "node-cron";
-import { Message, Player, UserRequest, Word } from "@shared/types/game";
+import {
+  Message,
+  Player,
+  UserRequest,
+  UsersList,
+  Word,
+} from "@shared/types/game";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -84,12 +90,27 @@ io.on("connection", (socket) => {
         bingo: false,
       };
       connectedUsers.set(id, player);
+      messages.push({
+        username: player.username,
+        words: [],
+        message: "se připojil do hry",
+        type: "userConnected",
+        currentTime: getCurrentTime(),
+      } satisfies Message);
+      io.emit("messages:update", messages[messages.length - 1]);
     } else {
       player.id = socket.id;
       connectedUsers.set(id, player);
     }
-
     socket.emit("player:init", player);
+    io.emit(
+      "users:list",
+      Array.from(connectedUsers.values()).map((u) => ({
+        id: u.id,
+        username: u.username,
+        bingo: u.bingo,
+      })) satisfies UsersList
+    );
   });
 
   socket.on("player:selectWord", (word: Word) => {
@@ -119,7 +140,14 @@ io.on("connection", (socket) => {
   );
 
   socket.on("users:get", () =>
-    io.emit("users:post", Array.from(connectedUsers.values()))
+    io.emit(
+      "users:list",
+      Array.from(connectedUsers.values()).map((u) => ({
+        id: u.id,
+        username: u.username,
+        bingo: u.bingo,
+      })) satisfies UsersList
+    )
   );
 
   socket.on("bingo", () => {
@@ -134,6 +162,14 @@ io.on("connection", (socket) => {
         currentTime: getCurrentTime(),
       } satisfies Message);
       io.emit("messages:update", messages[messages.length - 1]);
+      io.emit(
+        "users:list",
+        Array.from(connectedUsers.values()).map((u) => ({
+          id: u.id,
+          username: u.username,
+          bingo: u.bingo,
+        })) satisfies UsersList
+      );
     });
   });
 
@@ -144,6 +180,32 @@ io.on("connection", (socket) => {
   socket.on("messages:add", (message: Message) => {
     messages.push(message);
     socket.broadcast.emit("messages:update", message);
+  });
+
+  cron.schedule("* * * * *", () => {
+    // Check list of connected sockets
+    // If there is no socket, remove player from connectedUsers
+    for (const [id, player] of connectedUsers.entries()) {
+      if (!io.sockets.sockets.has(player.id)) {
+        messages.push({
+          username: player.username,
+          words: [],
+          message: "se odpojil",
+          type: "userDisconnected",
+          currentTime: getCurrentTime(),
+        } satisfies Message);
+        io.emit("messages:update", messages[messages.length - 1]);
+        connectedUsers.delete(id);
+        io.emit(
+          "users:list",
+          Array.from(connectedUsers.values()).map((u) => ({
+            id: u.id,
+            username: u.username,
+            bingo: u.bingo,
+          })) satisfies UsersList
+        );
+      }
+    }
   });
 });
 

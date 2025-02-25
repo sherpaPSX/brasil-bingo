@@ -74,6 +74,8 @@ export default function Messages() {
             className={cn("mb-2 flex", {
               "text-yellow-300": message.type === "bingo",
               "text-white": message.type === "userMessage",
+              "text-red-500": message.type === "userDisconnected",
+              "text-green-500": message.type === "userConnected",
             })}
           >
             <span className="me-2 italic">{message.currentTime}</span>
