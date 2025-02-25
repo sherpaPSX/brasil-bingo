@@ -10,7 +10,7 @@ import {
 const getNextExecutionTime = (): number => {
   const now = new Date();
   let nextExecution = set(now, {
-    hours: 10,
+    hours: 9,
     minutes: 30,
     seconds: 0,
     milliseconds: 0,
