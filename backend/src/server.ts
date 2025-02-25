@@ -115,7 +115,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  cron.schedule("40 9 * * 1-5", startGame);
+  cron.schedule("* * * * *", startGame);
 
   cron.schedule("15 10 * * 1-5", () => {
     socket.on("game:reset", () => {
