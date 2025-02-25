@@ -127,6 +127,18 @@ io.on("connection", (socket) => {
     });
   });
 
+  cron.schedule(
+    "0 0 * * *",
+    () => {
+      connectedUsers = new Map();
+      messages = [];
+    },
+    {
+      scheduled: true,
+      timezone: "Europe/Prague",
+    }
+  );
+
   socket.on("users:get", () =>
     io.emit(
       "users:list",
@@ -170,50 +182,23 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("messages:update", message);
   });
 
-  // Reset the game every day at midnight
-  cron.schedule(
-    "0 0 * * *",
-    () => {
-      connectedUsers = new Map();
-      messages = [];
-    },
-    {
-      scheduled: true,
-      timezone: "Europe/Prague",
-    }
-  );
-
-  // Check for disconnected users every minute
-  cron.schedule(
-    "* * * * *",
-    () => {
-      for (const [id, player] of connectedUsers.entries()) {
-        if (!io.sockets.sockets.has(player.id)) {
-          messages.push({
-            username: player.username,
-            words: [],
-            message: "se odpojil",
-            type: "userDisconnected",
-            currentTime: getCurrentTime(),
-          } satisfies Message);
-          io.emit("messages:update", messages[messages.length - 1]);
-          connectedUsers.delete(id);
-          io.emit(
-            "users:list",
-            Array.from(connectedUsers.values()).map((u) => ({
-              id: u.id,
-              username: u.username,
-              bingo: u.bingo,
-            })) satisfies UsersList
-          );
-        }
+  cron.schedule("* * * * *", () => {
+    // Check list of connected sockets
+    // If there is no socket, remove player from connectedUsers
+    for (const [id, player] of connectedUsers.entries()) {
+      if (!io.sockets.sockets.has(player.id)) {
+        messages.push({
+          username: player.username,
+          words: [],
+          message: "se odpojil",
+          type: "userDisconnected",
+          currentTime: getCurrentTime(),
+        } satisfies Message);
+        io.emit("messages:update", messages[messages.length - 1]);
+        connectedUsers.delete(id);
       }
-    },
-    {
-      scheduled: true,
-      timezone: "Europe/Prague",
     }
-  );
+  });
 });
 
 httpServer.listen(PORT, () =>
