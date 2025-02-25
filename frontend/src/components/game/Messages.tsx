@@ -80,7 +80,7 @@ export default function Messages() {
           >
             <span className="me-2 italic">{message.currentTime}</span>
             <div>
-              <span className="font-bold me-2">{message.username}</span>
+              <span className="font-bold">{message.username}</span>{" "}
               <span className="me-2 italic">{message.message}</span>
               <span className={cn("font-bold")}>
                 {message.words.join(", ")}
@@ -91,7 +91,7 @@ export default function Messages() {
         <div ref={scrollRef} />
       </ScrollArea>
       <form onSubmit={messageSubmitHandler}>
-        <div className="flex gap-2 mt-2 border border-white/30 focus-within:border-white">
+        <div className="flex bg-gray-700/80 gap-2 mt-2 border border-white/30 focus-within:border-white">
           <Input
             value={message}
             placeholder="Napiš něco ostatním..."

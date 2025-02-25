@@ -24,8 +24,8 @@ const BUZZWORDS = [
   "analýza",
   "planning",
   "blocker",
-  "prs",
-  "int",
+  "PRS",
+  "INT",
   "produkce",
   "sprint",
   "smoke testy",
@@ -36,7 +36,7 @@ const BUZZWORDS = [
   "frontend",
   "synchro",
   "brasil browser",
-  "CMR",
+  "CRM",
   "Smart",
   "kapacita",
   "business",
@@ -44,7 +44,7 @@ const BUZZWORDS = [
   "defekt",
   "balíčky",
   "databáze",
-  "AWOS",
+  "Avos",
   "hyporisk",
 ];
 
