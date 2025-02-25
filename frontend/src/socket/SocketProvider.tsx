@@ -18,7 +18,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     let userId = localStorage.getItem("userId");
     if (!userId) {
-      userId = crypto.randomUUID(); // Vytvoří unikátní ID (můžeš použít i jiný způsob)
+      userId = crypto.randomUUID();
       localStorage.setItem("userId", userId);
     }
 
@@ -31,7 +31,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
       if (username) {
         newSocket.emit("user:add", {
           username,
-          id: userId, // Použijeme stále stejné ID
+          id: userId,
         });
       }
     });
@@ -41,8 +41,6 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
       setSelectedWords(player.selectedWords);
       setBingo(player.bingo);
     });
-
-    newSocket.emit("game:status");
 
     return () => {
       newSocket.disconnect();

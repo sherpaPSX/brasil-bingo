@@ -51,7 +51,8 @@ const getRandomWords = (): Word[] =>
     .map((word, index) => ({ index, title: word }));
 
 const getCurrentTime = () =>
-  new Date().toLocaleTimeString("cs-CZ", {
+  new Date().toLocaleString("cs-CZ", {
+    timeZone: "Europe/Prague",
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -105,10 +106,17 @@ io.on("connection", (socket) => {
     });
   });
 
-  cron.schedule("0 0 * * *", () => {
-    connectedUsers = new Map();
-    messages = [];
-  });
+  cron.schedule(
+    "0 0 * * *",
+    () => {
+      connectedUsers = new Map();
+      messages = [];
+    },
+    {
+      scheduled: true,
+      timezone: "Europe/Prague",
+    }
+  );
 
   socket.on("users:get", () =>
     io.emit("users:post", Array.from(connectedUsers.values()))
