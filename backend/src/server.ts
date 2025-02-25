@@ -84,6 +84,7 @@ io.on("connection", (socket) => {
     player.id = socket.id;
     connectedUsers.set(id || socket.id, player);
     socket.emit("player:init", player);
+    io.emit("game:status", { started: gameStarted });
     io.emit("users:post", Array.from(connectedUsers.values()));
   });
 
@@ -114,7 +115,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  cron.schedule("30 9 * * 1-5", startGame);
+  cron.schedule("00 10 * * 1-5", startGame);
 
   cron.schedule("15 10 * * 1-5", () => {
     socket.on("game:reset", () => {
