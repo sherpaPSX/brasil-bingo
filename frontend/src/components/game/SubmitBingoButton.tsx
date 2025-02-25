@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 
 export default function SubmitBingoButton() {
-  const { socket, bingo, selectedWords } = useSocket();
+  const { socket, selectedWords, setBingo, bingo } = useSocket();
   const [showSubmitButton, setShowSubmitButton] = useState(false);
 
   useEffect(() => {
@@ -13,10 +13,8 @@ export default function SubmitBingoButton() {
   }, [selectedWords]);
 
   const submitBingo = () => {
-    socket?.emit(
-      "bingo",
-      selectedWords.map((word) => word.title)
-    );
+    setBingo(true);
+    socket?.emit("bingo");
   };
 
   return (

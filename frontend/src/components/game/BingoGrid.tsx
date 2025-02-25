@@ -1,20 +1,13 @@
-import React, { useEffect, useState } from "react";
 import { Word } from "../../types/Word";
 import { useSocket } from "../../socket/socketContext";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Player } from "@shared/types/game";
 
 const BingoGrid: React.FC = () => {
-  const { socket, words, selectedWords, bingo } = useSocket();
-  const [selected, setSelected] = useState<Player["selectedWords"]>([]);
+  const { socket, words, selectedWords, setSelectedWords, bingo } = useSocket();
 
-  useEffect(() => {
-    setSelected(selectedWords);
-  }, [selectedWords]);
-
-  const handleCellClick = (word: Word) => {
-    setSelected((prev) => {
+  const handleWordClick = (word: Word) => {
+    setSelectedWords((prev) => {
       if (prev.some((w) => w.index === word.index)) {
         return prev.filter((w) => w.index !== word.index);
       }
@@ -24,7 +17,7 @@ const BingoGrid: React.FC = () => {
   };
 
   const isWordSelected = (index: number) => {
-    return selected.some((word) => word.index === index);
+    return selectedWords.some((word) => word.index === index);
   };
 
   return (
@@ -38,17 +31,17 @@ const BingoGrid: React.FC = () => {
                 key={word.index}
                 className={cn("word-card", {
                   selected: isWordSelected(word.index),
-                  "pointer-events-none": bingo !== undefined,
+                  "pointer-events-none": bingo,
                 })}
-                onClick={() => handleCellClick(word)}
+                onClick={() => handleWordClick(word)}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
-                    handleCellClick(word);
+                    handleWordClick(word);
                   }
                 }}
-                disabled={bingo !== undefined}
+                disabled={bingo}
                 aria-label={`${word.title}${
                   isWordSelected(word.index) ? " (marked)" : ""
                 }`}

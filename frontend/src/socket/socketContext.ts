@@ -1,12 +1,12 @@
-import { Player } from "@shared/types/game";
+import { Player, Word } from "@shared/types/game";
 import { createContext, useContext } from "react";
 import { Socket } from "socket.io-client";
 
 interface SocketContextType {
   socket: Socket | null;
   words: Player["words"];
-  setWords: (words: Player["words"]) => void;
   selectedWords: Player["selectedWords"];
+  setSelectedWords: React.Dispatch<React.SetStateAction<Word[]>>;
   bingo: Player["bingo"];
   setBingo: (bingo: Player["bingo"]) => void;
 }

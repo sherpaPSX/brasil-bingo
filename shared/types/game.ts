@@ -2,7 +2,7 @@ export interface Message {
   username: string;
   words: string[];
   message: string;
-  type: "mark" | "bingo";
+  type: "userMessage" | "bingo";
   currentTime: string;
 }
 
@@ -20,9 +20,7 @@ export interface Player {
   username: string;
   words: Word[];
   selectedWords: Word[];
-  bingo?: {
-    time: number;
-  };
+  bingo: boolean;
 }
 
 export type PlayerResponse = Player;

@@ -2,13 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cron from "node-cron";
-import {
-  Message,
-  MessageRequest,
-  Player,
-  UserRequest,
-  Word,
-} from "@shared/types/game";
+import { Message, Player, UserRequest, Word } from "@shared/types/game";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -48,9 +42,8 @@ const BUZZWORDS = [
   "hyporisk",
 ];
 
-const connectedUsers = new Map<string, Player>();
+let connectedUsers = new Map<string, Player>();
 let messages: Message[] = [];
-let gameStarted = false;
 
 const getRandomWords = (): Word[] =>
   BUZZWORDS.sort(() => Math.random() - 0.5)
@@ -64,6 +57,19 @@ const getCurrentTime = () =>
     second: "2-digit",
   });
 
+const findPlayerBySocketId = (
+  socketId: string,
+  callback: (userId: string, player: Player) => void
+): void => {
+  for (const [id, player] of connectedUsers.entries()) {
+    if (player.id === socketId) {
+      callback(id, player);
+      return;
+    }
+  }
+  console.error(`Player not found for socket ${socketId}`);
+};
+
 io.on("connection", (socket) => {
   socket.on("user:add", ({ username, id }: UserRequest) => {
     let player = connectedUsers.get(id);
@@ -74,6 +80,7 @@ io.on("connection", (socket) => {
         username,
         words: getRandomWords(),
         selectedWords: [],
+        bingo: false,
       };
       connectedUsers.set(id, player);
     } else {
@@ -85,75 +92,50 @@ io.on("connection", (socket) => {
   });
 
   socket.on("player:selectWord", (word: Word) => {
-    const player = Array.from(connectedUsers.values()).find(
-      (p) => p.id === socket.id
-    );
-    if (!player) return;
-
-    if (player.selectedWords) {
-      const index = player.selectedWords.findIndex(
-        (w) => w.index === word.index
-      );
-      index === -1
-        ? player.selectedWords.push(word)
-        : player.selectedWords.splice(index, 1);
-      connectedUsers.set(player.id, player);
-    }
+    findPlayerBySocketId(socket.id, (userId, player) => {
+      if (player.selectedWords) {
+        const index = player.selectedWords.findIndex(
+          (w) => w.index === word.index
+        );
+        index === -1
+          ? player.selectedWords.push(word)
+          : player.selectedWords.splice(index, 1);
+        connectedUsers.set(userId, player);
+      }
+    });
   });
 
   cron.schedule("0 0 * * *", () => {
-    socket.on("game:reset", () => {
-      gameStarted = false;
-      connectedUsers.forEach((player) => {
-        player.selectedWords = [];
-        player.bingo = undefined;
-        player.words = getRandomWords();
-        io.to(player.id).emit("player:init", player);
-      });
-
-      io.emit("game:status", { started: gameStarted });
-      messages = [];
-      io.emit("messages:post", messages);
-
-      // clear all unconnected users
-      connectedUsers.forEach((player, id) => {
-        if (!io.sockets.sockets.has(id)) connectedUsers.delete(id);
-      });
-    });
+    connectedUsers = new Map();
+    messages = [];
   });
 
   socket.on("users:get", () =>
     io.emit("users:post", Array.from(connectedUsers.values()))
   );
 
-  socket.on("game:status", () =>
-    io.emit("game:status", { started: gameStarted })
-  );
+  socket.on("bingo", () => {
+    findPlayerBySocketId(socket.id, (userId, player) => {
+      connectedUsers.set(userId, { ...player, bingo: true });
 
-  socket.on("bingo", (bingoWords: string[]) => {
-    const player = connectedUsers.get(socket.id);
-    if (!player) return;
-    player.bingo = { time: Date.now() };
-    messages.push({
-      username: player.username,
-      words: bingoWords,
-      message: "má Bingo se slovy",
-      type: "bingo",
-      currentTime: getCurrentTime(),
-    } satisfies Message);
-    io.to(socket.id).emit("player:init", player);
-    io.emit("message:new", messages[messages.length - 1]);
+      messages.push({
+        username: player.username,
+        words: player.selectedWords.map((w) => w.title),
+        message: "má Bingo se slovy",
+        type: "bingo",
+        currentTime: getCurrentTime(),
+      } satisfies Message);
+      io.emit("messages:update", messages[messages.length - 1]);
+    });
   });
 
-  socket.on("messages:get", () => io.emit("messages:post", messages));
-  socket.on("message:new", (message: MessageRequest) => {
+  socket.on("messages:get", () => {
+    socket.emit("messages:all", messages);
+  });
+
+  socket.on("messages:add", (message: Message) => {
     messages.push(message);
-    io.emit("message:new", message);
-  });
-
-  socket.on("disconnect", () => {
-    connectedUsers.delete(socket.id);
-    io.emit("users:post", Array.from(connectedUsers.values()));
+    socket.broadcast.emit("messages:update", message);
   });
 });
 

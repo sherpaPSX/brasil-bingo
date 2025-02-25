@@ -19,8 +19,13 @@ const winPatterns = [
 ];
 
 export const checkBingo = (selected: Word[]): [boolean] => {
-  const winningPattern = winPatterns.find((pattern) =>
-    pattern.every((index) => selected.some((word) => word.index === index))
-  );
-  return [!!winningPattern];
+  const selectedIndexes = new Set(selected.map((word) => word.index));
+
+  for (const pattern of winPatterns) {
+    if (pattern.every((index) => selectedIndexes.has(index))) {
+      return [true];
+    }
+  }
+
+  return [false];
 };

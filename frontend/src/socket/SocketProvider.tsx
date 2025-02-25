@@ -13,7 +13,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   const [selectedWords, setSelectedWords] = useState<Player["selectedWords"]>(
     []
   );
-  const [bingo, setBingo] = useState<Player["bingo"]>(undefined);
+  const [bingo, setBingo] = useState<Player["bingo"]>(false);
 
   useEffect(() => {
     let userId = localStorage.getItem("userId");
@@ -54,8 +54,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         socket,
         words,
-        setWords,
         selectedWords,
+        setSelectedWords,
         bingo,
         setBingo,
       }}
